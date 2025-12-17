@@ -1,0 +1,30 @@
+services:
+  api:
+    build: .
+    image: cv-creator-api:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://cv_user:cv_password@db:5432/cv_db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      - POSTGRES_DB=cv_db
+      - POSTGRES_USER=cv_user
+      - POSTGRES_PASSWORD=cv_password
+    volumes:
+      - cv-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cv_user -d cv_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+volumes:
+  cv-data:
