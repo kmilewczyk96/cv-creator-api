@@ -1,11 +1,27 @@
 services:
   api:
     build: .
-    image: cv-creator-api:latest
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://cv_user:cv_password@db:5432/cv_db
+      - UV_NO_DEV=0
+    develop:
+      # Create a `watch` configuration to update the app
+      # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
+      watch:
+        # Sync the working directory with the `/app` directory in the container
+        - action: sync
+          path: .
+          target: /app
+          # Exclude the project virtual environment — it could be for a
+          # different platform in the container
+          ignore:
+            - .venv/
+
+        - action: rebuild
+          path: ./uv.lock
+
     depends_on:
       db:
         condition: service_healthy

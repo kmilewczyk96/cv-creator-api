@@ -1,6 +1,13 @@
 .git
 .gitignore
 __pycache__/
+app/__pycache__/
+app/*/__pycache__/
+app/*/*/__pycache__/
+app/*/*/*/__pycache__/
+app/*/*/*/*/__pycache__/
+app/*/*/*/*/*/__pycache__/
+app/*/*/*/*/*/*/__pycache__/
 *.py[cod]
 *.pyo
 *.pyd

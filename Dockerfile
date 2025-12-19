@@ -1,22 +1,43 @@
-FROM python:3.14-alpine
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1 \
-    UV_SYSTEM_PIP=1
+FROM ghcr.io/astral-sh/uv:python3.14-alpine
+
+# Install the project into `/app`
 WORKDIR /app
 
-RUN apk add --no-cache curl ca-certificates build-base && \
-    curl -LsSf https://astral.sh/uv/install.sh | sh && \
-    ln -s /root/.local/bin/uv /usr/local/bin/uv
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-# Copy only dependency manifests first (enables better Docker layer caching)
-COPY pyproject.toml uv.lock ./
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
 
-# Install dependencies based on the lockfile (no dev deps)
-RUN uv sync --frozen --no-dev
+# Omit development dependencies
+ENV UV_NO_DEV=1
 
-COPY . .
+# Ensure installed tools can be executed out of the box
+ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
-EXPOSE 8000
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    apk add --update --no-cache postgresql-client && \
+    apk add --update --no-cache --virtual .tmp-build-deps \
+        build-base postgresql-dev musl-dev && \
+    uv sync --locked --no-install-project && \
+    apk del .tmp-build-deps
 
-CMD ["uv", "run", "uvicorn", "api.api:api", "--host", "0.0.0.0", "--port", "8000"]
+# Then, add the rest of the project source code and install it
+# Installing separately from its dependencies allows optimal layer caching
+COPY . /app
+RUN uv sync --locked
+
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Reset the entrypoint, don't invoke `uv`
+ENTRYPOINT []
+
+# Run the FastAPI application by default
+# Uses `uv run` to sync dependencies on startup, respecting UV_NO_DEV
+# Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
+# Uses `--host 0.0.0.0` to allow access from outside the container
+# Note in production, you should use `fastapi run` instead
+CMD ["uv", "run", "fastapi", "dev", "--host", "0.0.0.0", "app/main.py"]
