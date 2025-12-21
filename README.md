@@ -15,4 +15,7 @@ An API for creating and previewing CVs/resumes. Built with FastAPI and PostgreSQ
    ```bash
    docker compose up
    ```
-   
+   or if you want to enable hot reload:
+   ```bash
+   docker compose up --watch
+   ```

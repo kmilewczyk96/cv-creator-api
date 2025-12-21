@@ -14,9 +14,12 @@ app/*/*/*/*/*/*/__pycache__/
 .Python
 .venv/
 venv/
-.idea/
 .vscode/
 *.log
 .DS_Store
 Thumbs.db
 test_main.http
+
+# PyCharm related:
+.idea/
+docker-watch.sh

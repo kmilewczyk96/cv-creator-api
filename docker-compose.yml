@@ -5,7 +5,11 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://cv_user:cv_password@db:5432/cv_db
+      - RESEND_API_KEY=RESEND_API_KEY
       - UV_NO_DEV=0
+    env_file:
+      - path: .env
+        required: false
     develop:
       # Create a `watch` configuration to update the app
       # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
@@ -18,6 +22,7 @@ services:
           # different platform in the container
           ignore:
             - .venv/
+            - docker-watch.sh
 
         - action: rebuild
           path: ./uv.lock
