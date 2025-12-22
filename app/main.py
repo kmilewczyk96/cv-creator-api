@@ -1,21 +1,15 @@
 import os
 from contextlib import asynccontextmanager
-from typing import Annotated, Dict
 
 import resend
-from fastapi import (
-    Depends,
-    FastAPI,
+from fastapi import FastAPI
+from fastapi.security import (
+    OAuth2PasswordBearer,
 )
-from fastapi.security import OAuth2PasswordBearer
-from pydantic import EmailStr
 
-from api.core.db import create_db_and_tables
-from api.core.models import (
-    User,
-    Resume
-)
-from api.schemas import UserCreate
+from api.routers import user_router
+from core.db import create_db_and_tables
+from core.models import *
 
 
 @asynccontextmanager
@@ -24,28 +18,21 @@ async def lifespan(fast_api: FastAPI):
     yield
 
 resend.api_key = os.environ.get('RESEND_API_KEY')
+
 api = FastAPI(lifespan=lifespan)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+api.include_router(user_router)
 
-@api.get("/cv/list/")
-async def get_cv_list(token: Annotated[str, Depends(oauth2_scheme)]):
-    """Get the list of all CVs in the DB."""
-    return {'token': token}
-
-
-@api.post('/user/create/')
-async def create_user(user: UserCreate):
-    """Create a new user in the DB."""
-    pass
-
-
-@api.post('/email/send-email/')
-def send_mail(recipient: EmailStr) -> Dict:
+@api.post('/user/auth/send-verification/')
+async def send_verification_code():
+    """
+    Send an email with a new verification code to the logged-in User.
+    :return:
+    """
     params: resend.Emails.SendParams = {
-        "from": "noreply@karol-milewczyk.com",
-        "to": [recipient],
-        "subject": "Hello World",
-        "html": "<strong>it works!</strong>",
+        'from': f'noreply@{os.environ.get('DOMAIN_NAME')}',
+        'to': [],
+        'subject': 'Verification Code',
+        'html': '<h2>Hola</h2>',
     }
-    email: resend.Email = resend.Emails.send(params)
-    return email
+    return resend.Emails.send(params)

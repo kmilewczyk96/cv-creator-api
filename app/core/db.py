@@ -12,8 +12,6 @@ db_url = os.getenv('DATABASE_URL')
 engine = create_engine(db_url)
 
 def create_db_and_tables():
-    from api.core.models import User, Resume
-    print(f"Creating tables for models: {SQLModel.metadata.tables.keys()}")
     SQLModel.metadata.create_all(bind=engine)
 
 def get_session():

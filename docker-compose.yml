@@ -1,6 +1,9 @@
 services:
   api:
     build: .
+    working_dir: /app
+    volumes:
+      - ./app:/app/app
     ports:
       - "8000:8000"
     environment:
@@ -14,16 +17,7 @@ services:
       # Create a `watch` configuration to update the app
       # https://docs.docker.com/compose/file-watch/#compose-watch-versus-bind-mounts
       watch:
-        # Sync the working directory with the `/app` directory in the container
-        - action: sync
-          path: .
-          target: /app
-          # Exclude the project virtual environment — it could be for a
-          # different platform in the container
-          ignore:
-            - .venv/
-            - docker-watch.sh
-
+        # Rebuild container on package changes
         - action: rebuild
           path: ./uv.lock
 
