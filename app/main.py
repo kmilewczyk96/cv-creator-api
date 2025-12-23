@@ -8,13 +8,10 @@ from fastapi.security import (
 )
 
 from api.routers import user_router
-from core.db import create_db_and_tables
-from core.models import *
 
 
 @asynccontextmanager
 async def lifespan(fast_api: FastAPI):
-    create_db_and_tables()
     yield
 
 resend.api_key = os.environ.get('RESEND_API_KEY')

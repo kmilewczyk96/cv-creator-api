@@ -1,11 +1,17 @@
 import datetime
 import uuid
 
+from typing import Optional, TYPE_CHECKING
+
 from pydantic import EmailStr
 from sqlmodel import (
     Field,
-    SQLModel,
+    SQLModel, Relationship,
 )
+
+
+if TYPE_CHECKING:
+    from . import VerificationCode
 
 
 class User(SQLModel, table=True):
@@ -18,3 +24,9 @@ class User(SQLModel, table=True):
     is_verified: bool = False
 
     created: datetime.datetime
+
+    verification_code_id: Optional[uuid.UUID] = Field(default=None, foreign_key='verificationcode.id')
+    verification_code: Optional['VerificationCode'] = Relationship(
+        back_populates='user',
+        sa_relationship_kwargs={'uselist': False}
+    )
