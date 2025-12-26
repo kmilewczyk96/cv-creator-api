@@ -15,7 +15,7 @@ from api.schemas.user import (
 )
 from core.db import SessionDep
 from core.models import User
-
+from services.verification_service import VerificationService
 
 password_hash = PasswordHash.recommended()
 
@@ -36,14 +36,17 @@ async def create_user(user: UserCreate, session: SessionDep) -> JSONResponse:
             detail="Passwords don't match!"
         )
 
-    instance = User.model_validate(
+    vs = VerificationService(session=session)
+    verification_code = vs.generate_new_verification_code()
+    new_user = User.model_validate(
         user,
         update={
             'hashed_password': password_hash.hash(user.password_1),
             'created': datetime.datetime.now(),
         }
     )
-    session.add(instance=instance)
+    new_user.verification_code_id = verification_code.id
+    session.add(instance=new_user)
     try:
         session.commit()
     except IntegrityError:
@@ -53,11 +56,12 @@ async def create_user(user: UserCreate, session: SessionDep) -> JSONResponse:
             detail="User with this email already exists!"
         )
 
-    session.refresh(instance=instance)
+    session.refresh(instance=new_user)
+    vs.send_verification_code(verification_code=verification_code)
     return JSONResponse(
         content={
-            'email': instance.email,
-            'full_name': instance.full_name
+            'email': new_user.email,
+            'full_name': new_user.full_name
         },
         status_code=201,
     )

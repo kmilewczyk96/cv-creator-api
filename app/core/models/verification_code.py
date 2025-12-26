@@ -1,6 +1,9 @@
 import datetime
 import uuid
-from typing import TYPE_CHECKING
+from typing import (
+    Optional,
+    TYPE_CHECKING,
+)
 
 from sqlmodel import SQLModel, Field, Relationship
 
@@ -16,7 +19,7 @@ class VerificationCode(SQLModel, table=True):
     created: datetime.datetime
     expires: datetime.datetime
 
-    user: 'User' = Relationship(
-        back_populates='verificationcode',
+    user: Optional['User'] = Relationship(
+        back_populates='verification_code',
         sa_relationship_kwargs={'uselist': False}
     )

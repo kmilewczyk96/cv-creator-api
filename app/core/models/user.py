@@ -6,7 +6,8 @@ from typing import Optional, TYPE_CHECKING
 from pydantic import EmailStr
 from sqlmodel import (
     Field,
-    SQLModel, Relationship,
+    Relationship,
+    SQLModel,
 )
 
 
@@ -25,7 +26,11 @@ class User(SQLModel, table=True):
 
     created: datetime.datetime
 
-    verification_code_id: Optional[uuid.UUID] = Field(default=None, foreign_key='verificationcode.id')
+    verification_code_id: Optional[uuid.UUID] = Field(
+        default=None,
+        foreign_key='verificationcode.id',
+        ondelete='SET NULL',
+    )
     verification_code: Optional['VerificationCode'] = Relationship(
         back_populates='user',
         sa_relationship_kwargs={'uselist': False}
