@@ -5,8 +5,18 @@ import resend
 from random import choice
 from string import Template, ascii_uppercase, digits
 
+from fastapi import (
+    HTTPException,
+    status,
+)
+from pydantic import EmailStr
+from sqlmodel import select
+
 from core.db import SessionDep
-from core.models import VerificationCode
+from core.models import (
+    User,
+    VerificationCode,
+)
 
 
 class VerificationService:
@@ -46,3 +56,26 @@ class VerificationService:
 
         }
         return resend.Emails.send(params=params)
+
+    def verify_email(self, email: EmailStr, code: str):
+        sql = select(User).where(User.email == email)
+        user: User = self.session.exec(statement=sql).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='User with this email no longer exists!'
+            )
+
+        if (
+            not user.verification_code or
+            user.verification_code.code != code.upper() or
+            user.verification_code.expires <= datetime.datetime.now()
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Code has expired or is invalid!',
+            )
+
+        self.session.delete(user.verification_code)
+        user.is_verified = True
+        self.session.commit()

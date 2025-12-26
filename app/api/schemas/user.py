@@ -1,6 +1,15 @@
 from pydantic import BaseModel, EmailStr
 
 
+class EmailVerifiedResponse(BaseModel):
+    message: str
+
+
+class Token(BaseModel):
+    token_value: str
+    token_type: str
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str
